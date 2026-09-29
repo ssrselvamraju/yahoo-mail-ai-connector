@@ -1,0 +1,40 @@
+{
+  "name": "yahoo-mail-ai-connector",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "mcp:fake": "node dist/apps/local-connector/src/stdio.js --provider=fake",
+    "mcp:yahoo": "node dist/apps/local-connector/src/stdio.js --provider=yahoo",
+    "connector:setup": "npm run build --silent && node dist/apps/local-connector/src/cli.js setup",
+    "connector:doctor": "npm run build --silent && node dist/apps/local-connector/src/cli.js doctor",
+    "connector:remove": "npm run build --silent && node dist/apps/local-connector/src/cli.js remove",
+    "probe:yahoo": "node dist/apps/local-connector/src/probes/yahoo-capabilities.js",
+    "probe:keyring": "node dist/apps/local-connector/src/probes/keyring.js",
+    "smoke:stdio": "node dist/tests/contract/stdio-smoke.js",
+    "smoke:yahoo-metadata": "node dist/tests/contract/yahoo-live-smoke.js",
+    "check": "npm run typecheck && npm test && npm run build && npm run smoke:stdio"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.1.0",
+    "@modelcontextprotocol/server": "2.1.0",
+    "@napi-rs/keyring": "2.1.0",
+    "imapflow": "2.1.0",
+    "mailparser": "3.9.29",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/mailparser": "3.4.6",
+    "@types/node": "26.6.3",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vitest": "5.0.2"
+  }
+}

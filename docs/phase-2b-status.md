@@ -1,0 +1,29 @@
+# Phase 2B read-only vertical slice status
+
+Status: implementation in progress
+
+## Implemented
+
+- Yahoo app-password records stored in the operating-system credential store; no plaintext fallback.
+- Out-of-band `setup`, `doctor`, and `remove` commands.
+- Strict-TLS Yahoo IMAP connection with bounded time, line, literal, and response sizes.
+- Read-only Yahoo implementations of profile, mailbox listing, bounded single-mailbox search, and message fetch.
+- Opaque mailbox, message, and attachment references with UIDVALIDITY checks for stale message references.
+- Read-only mailbox locks and bounded source/MIME parsing.
+- The existing provider-neutral MCP contract and synthetic provider remain unchanged.
+
+## Verified
+
+- TypeScript strict compilation.
+- Unit/schema tests: 3 files, 8 tests.
+- Synthetic-provider MCP stdio contract smoke test.
+- Live Yahoo TLS, authentication, mailbox listing, read-only Inbox open, and server-side search capability probe.
+- Windows Credential Manager canary lifecycle.
+- Stored-credential `doctor` check for keychain retrieval, strict TLS, and Yahoo authentication.
+- Redacted live MCP test for profile, mailbox listing, and bounded one-result metadata search; no message body was fetched and no account/mail metadata was emitted.
+
+## Remaining gates
+
+- Test message fetch only against a designated synthetic test message.
+- Complete Muse Code host testing when Muse Code is installed.
+- Add macOS and Linux credential-backend verification before claiming support for those platforms.
