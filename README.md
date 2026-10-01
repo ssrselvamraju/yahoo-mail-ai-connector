@@ -31,7 +31,7 @@ Security is layered rather than absolute:
 4. Server-side code opens mailboxes read-only and fetches bodies without setting the read flag.
 5. MCP tools are annotated as read-only, return bounded data, and treat message content as untrusted input.
 
-See [the current architecture and trust boundaries](docs/architecture.md), [security policy](SECURITY.md), and [spike runbook](docs/spikes/README.md).
+See [the current architecture and trust boundaries](docs/architecture.md), [design record and roadmap](docs/design-and-roadmap.md), [security policy](SECURITY.md), and [spike runbook](docs/spikes/README.md).
 
 ## What is included
 
