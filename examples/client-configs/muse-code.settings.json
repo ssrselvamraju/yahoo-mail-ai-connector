@@ -1,16 +1,14 @@
 {
-  "schema_version": 1,
-  "mcpServers": {
+  "mcp_servers": {
     "yahoo-mail": {
-      "type": "stdio",
+      "transport": "stdio",
       "command": "node",
       "args": [
         "REPLACE_WITH_ABSOLUTE_REPOSITORY_PATH/dist/apps/local-connector/src/stdio.js",
         "--provider=fake"
       ],
-      "required": false,
-      "startup_timeout_sec": 30,
-      "tool_timeout_sec": 60
+      "enabled": true,
+      "mode": "optional"
     }
   }
 }

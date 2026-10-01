@@ -1,8 +1,8 @@
 # Yahoo Mail AI Connector
 
-An experimental, local-first Yahoo Mail connector for MCP-compatible AI clients.
+An experimental, local-first Yahoo Mail connector for MCP-compatible AI clients, with an explicit secret-injection mode for managed runtimes.
 
-The repository is currently in the Phase 2A spike stage. It contains a provider-neutral contract, a synthetic mail provider, a local MCP server, and opt-in probes for Yahoo IMAP and the operating-system credential store. It does not yet provide production Yahoo access or write operations.
+The repository contains a provider-neutral contract, a synthetic provider, a read-only Yahoo IMAP provider, a local MCP server, OS-keyring setup commands, and opt-in validation probes. It does not provide mail write operations.
 
 See [the Phase 1 architecture](docs/phase-1-plan.md) and [the spike runbook](docs/spikes/README.md).
 
@@ -26,6 +26,8 @@ npm run mcp:yahoo
 ```
 
 `connector:setup` verifies the login before saving it to the operating-system credential store. `connector:remove` deletes the saved record. The MCP server retrieves the credential only when opening a Yahoo connection and exposes read-only operations.
+
+For a Muse-managed VM or another reviewed runtime with a real managed secret store, see [the managed-VM runbook](docs/muse-managed-vm.md). Never commit Yahoo credentials or place them in a `.env` file.
 
 ## Safety status
 
