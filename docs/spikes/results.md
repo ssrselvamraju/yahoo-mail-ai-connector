@@ -4,7 +4,7 @@ Status legend: `not run`, `pass`, `fail`, `blocked`.
 
 | Spike | Status | Evidence / blocker |
 |---|---|---|
-| Fake provider unit and schema tests | pass | TypeScript compilation succeeds; Vitest ran 2 source test files and all 6 tests passed on Windows with Node 24.19.0. |
+| Fake provider unit and schema tests | pass | TypeScript strict compilation succeeds; Vitest ran 4 test files and all 13 tests passed on Windows. |
 | MCP stdio contract smoke test | pass | The official MCP client launched the compiled server, discovered the four expected tools and read-only annotations, and successfully called `get_profile`, `search_messages`, and `fetch_message`. No synthetic body text appeared on stderr. |
 | Windows credential-store probe | pass | `@napi-rs/keyring` stored, read, deleted, and confirmed deletion of a generated canary in Windows Credential Manager. The probe required an interactive user logon session; an isolated sandbox session returned `ERROR_NO_SUCH_LOGON_SESSION`, as expected. |
 | macOS credential-store probe | blocked | Requires a macOS test host. |
