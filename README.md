@@ -46,6 +46,8 @@ pnpm run check
 
 The checked-in Muse Code example starts the compiled server, so run `pnpm run build` before using it.
 
+See [client setup](docs/client-setup.md) for Muse Code, Codex, ChatGPT desktop, ChatGPT web/phone, Claude Code, VS Code, and Cursor.
+
 ## Connect Yahoo locally
 
 Use a Yahoo-generated app password, never the normal account password:

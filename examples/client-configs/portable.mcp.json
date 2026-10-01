@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "yahoo-mail": {
+      "command": "node",
+      "args": [
+        "REPLACE_WITH_ABSOLUTE_REPOSITORY_PATH/dist/apps/local-connector/src/stdio.js",
+        "--provider=fake"
+      ]
+    }
+  }
+}

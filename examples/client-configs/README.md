@@ -1,6 +1,6 @@
 # Client configuration examples
 
-These examples contain no credentials. Replace path placeholders before use.
+These examples contain no credentials. Replace path placeholders before use. For complete setup and verification instructions, see [`docs/client-setup.md`](../../docs/client-setup.md).
 
 ## Muse Code
 
@@ -18,3 +18,11 @@ Suggested smoke prompt:
 Do not switch the example to a live provider until the Yahoo probe, credential-store probe, and read-only integration tests pass.
 
 For a Muse-managed VM that clones and builds the repository, follow [`docs/muse-managed-vm.md`](../../docs/muse-managed-vm.md). Managed-VM credentials are intentionally separate from the local OS-keyring configuration.
+
+## Portable JSON
+
+`portable.mcp.json` uses the common `mcpServers` shape accepted by VS Code and Cursor. Copy it to the client-specific user or workspace location described in the setup guide.
+
+## Codex TOML
+
+Merge `codex.config.toml` into the relevant Codex `config.toml`. It starts with the synthetic provider and uses the `writes` approval policy, which can automatically permit accurately annotated read-only tools while retaining approval for future non-read-only tools.
