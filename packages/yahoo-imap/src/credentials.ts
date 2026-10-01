@@ -7,18 +7,50 @@ export interface YahooCredentials {
 }
 
 export interface CredentialStore {
+  readonly backend: CredentialBackend;
   load(): Promise<YahooCredentials>;
   save(credentials: YahooCredentials): Promise<void>;
   remove(): Promise<boolean>;
 }
 
 export type CredentialEnvironment = Readonly<Record<string, string | undefined>>;
+export type CredentialBackend =
+  | "windows-credential-manager"
+  | "macos-keychain"
+  | "linux-secret-service"
+  | "managed-environment";
 
 const service = "yahoo-mail-ai-connector";
 const account = "default-yahoo-account";
 
-export class KeyringCredentialStore implements CredentialStore {
-  readonly #entry = new Entry(service, account);
+export function osCredentialBackendFor(platform: NodeJS.Platform): Exclude<CredentialBackend, "managed-environment"> {
+  if (platform === "win32") return "windows-credential-manager";
+  if (platform === "darwin") return "macos-keychain";
+  if (platform === "linux") return "linux-secret-service";
+  throw new MailConnectorError("unsupported", `No approved operating-system credential store is configured for ${platform}.`);
+}
+
+export function createOsCredentialEntry(
+  serviceName = service,
+  accountName = account,
+  platform: NodeJS.Platform = process.platform,
+): Entry {
+  osCredentialBackendFor(platform);
+  return new Entry(
+    serviceName,
+    accountName,
+    platform === "linux" ? { linux: { store: "secret-service" } } : undefined,
+  );
+}
+
+export class OsCredentialStore implements CredentialStore {
+  readonly backend: Exclude<CredentialBackend, "managed-environment">;
+  readonly #entry: Entry;
+
+  constructor(platform: NodeJS.Platform = process.platform) {
+    this.backend = osCredentialBackendFor(platform);
+    this.#entry = createOsCredentialEntry(service, account, platform);
+  }
 
   async load(): Promise<YahooCredentials> {
     let stored = this.#entry.getPassword();
@@ -55,6 +87,8 @@ export class KeyringCredentialStore implements CredentialStore {
 }
 
 export class ManagedEnvironmentCredentialStore implements CredentialStore {
+  readonly backend = "managed-environment" as const;
+
   constructor(private readonly environment: CredentialEnvironment = process.env) {}
 
   async load(): Promise<YahooCredentials> {
@@ -87,7 +121,7 @@ export class ManagedEnvironmentCredentialStore implements CredentialStore {
 
 export function createRuntimeCredentialStore(environment: CredentialEnvironment = process.env): CredentialStore {
   const source = environment.YAHOO_CREDENTIAL_SOURCE;
-  if (source === undefined || source === "keyring") return new KeyringCredentialStore();
+  if (source === undefined || source === "keyring" || source === "os-keyring") return new OsCredentialStore();
   if (source === "managed-environment") return new ManagedEnvironmentCredentialStore(environment);
   throw new MailConnectorError("authentication_failed", `Unsupported Yahoo credential source: ${source}`);
 }

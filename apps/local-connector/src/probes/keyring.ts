@@ -1,10 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { Entry } from "@napi-rs/keyring";
+import { createOsCredentialEntry, osCredentialBackendFor } from "../../../../packages/yahoo-imap/src/credentials.js";
 
 const service = "yahoo-mail-ai-connector-spike";
 const account = `probe-${process.pid}-${Date.now()}`;
 const canary = `CANARY-${randomBytes(24).toString("hex")}`;
-const entry = new Entry(service, account);
+const backend = osCredentialBackendFor(process.platform);
+const entry = createOsCredentialEntry(service, account);
 
 let stored = false;
 try {
@@ -22,7 +23,7 @@ try {
   }
   if (recoveredAfterDelete !== null) throw new Error("The keyring entry remained readable after deletion.");
   process.stdout.write(
-    `${JSON.stringify({ ok: true, platform: process.platform, backend: "@napi-rs/keyring", stored: true, read: true, deleted: true })}\n`,
+    `${JSON.stringify({ ok: true, platform: process.platform, backend, stored: true, read: true, deleted: true })}\n`,
   );
 } catch (error) {
   if (stored) {

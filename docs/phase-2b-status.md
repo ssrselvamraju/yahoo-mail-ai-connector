@@ -4,7 +4,7 @@ Status: implementation in progress
 
 ## Implemented
 
-- Yahoo app-password records stored in the operating-system credential store; no plaintext fallback.
+- Yahoo app-password records stored in Windows Credential Manager, macOS Keychain, or Linux Secret Service according to the runtime OS; no plaintext fallback. Linux is pinned to persistent Secret Service and does not silently fall back to the in-memory kernel keyring.
 - Out-of-band `setup`, `doctor`, and `remove` commands.
 - Strict-TLS Yahoo IMAP connection with bounded time, line, literal, and response sizes.
 - Read-only Yahoo implementations of profile, mailbox listing, bounded single-mailbox search, and message fetch.
@@ -15,7 +15,7 @@ Status: implementation in progress
 ## Verified
 
 - TypeScript strict compilation.
-- Unit/schema tests: 3 files, 8 tests.
+- Unit/schema tests: 4 files, 13 tests.
 - Synthetic-provider MCP stdio contract smoke test.
 - Live Yahoo TLS, authentication, mailbox listing, read-only Inbox open, and server-side search capability probe.
 - Windows Credential Manager canary lifecycle.

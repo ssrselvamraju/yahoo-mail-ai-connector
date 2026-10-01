@@ -4,7 +4,7 @@ These examples contain no credentials. Replace path placeholders before use.
 
 ## Muse Code
 
-Run `npm run build`, replace the repository-path placeholder with an absolute path, and merge `muse-code.settings.json` into the user settings file documented by Muse Code. The Phase 2A example deliberately starts the compiled synthetic provider. After startup, run `/mcp` and verify these four tools:
+Run `pnpm run build`, replace the repository-path placeholder with an absolute path, and merge `muse-code.settings.json` into the user settings file documented by Muse Code. The Phase 2A example deliberately starts the compiled synthetic provider. After startup, run `/mcp` and verify these four tools:
 
 - `get_profile`
 - `list_mailboxes`

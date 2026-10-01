@@ -11,7 +11,7 @@ The spikes validate architecture risks before production implementation. All ord
 ## Automated fake-provider checks
 
 ```powershell
-npm run check
+pnpm run check
 ```
 
 This type-checks the workspace, runs unit tests, spawns the stdio MCP server through the official MCP client, lists its tools, verifies read-only annotations, and calls representative tools.
@@ -19,7 +19,7 @@ This type-checks the workspace, runs unit tests, spawns the stdio MCP server thr
 ## OS credential-store probe
 
 ```powershell
-npm run probe:keyring
+pnpm run probe:keyring
 ```
 
 The probe generates a random canary, stores it through `@napi-rs/keyring`, reads it, deletes it, and confirms it is gone. It never prints the canary. Failure is a release blocker on that operating system; there is no file-store fallback.
@@ -29,7 +29,7 @@ The probe generates a random canary, stores it through `@napi-rs/keyring`, reads
 Use a dedicated Yahoo test account containing synthetic messages only. Generate a Yahoo app password first, then run:
 
 ```powershell
-npm run probe:yahoo -- --email=your-test-account@yahoo.com
+pnpm run probe:yahoo -- --email=your-test-account@yahoo.com
 ```
 
 The app password is entered through a hidden TTY prompt. Do not pass it as an argument, environment variable, or `.env` value. The probe:

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ManagedEnvironmentCredentialStore,
   createRuntimeCredentialStore,
+  osCredentialBackendFor,
 } from "../../packages/yahoo-imap/src/credentials.js";
 
 describe("managed-environment credentials", () => {
@@ -38,5 +39,12 @@ describe("managed-environment credentials", () => {
     expect(() => createRuntimeCredentialStore({ YAHOO_CREDENTIAL_SOURCE: "plaintext-file" })).toThrow(
       "Unsupported Yahoo credential source",
     );
+  });
+
+  it("selects the native persistent store for each supported desktop OS", () => {
+    expect(osCredentialBackendFor("win32")).toBe("windows-credential-manager");
+    expect(osCredentialBackendFor("darwin")).toBe("macos-keychain");
+    expect(osCredentialBackendFor("linux")).toBe("linux-secret-service");
+    expect(() => osCredentialBackendFor("freebsd")).toThrow("No approved operating-system credential store");
   });
 });

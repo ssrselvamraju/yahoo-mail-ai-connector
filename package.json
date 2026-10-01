@@ -2,6 +2,8 @@
   "name": "yahoo-mail-ai-connector",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@11.19.0",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -13,14 +15,14 @@
     "test:watch": "vitest",
     "mcp:fake": "node dist/apps/local-connector/src/stdio.js --provider=fake",
     "mcp:yahoo": "node dist/apps/local-connector/src/stdio.js --provider=yahoo",
-    "connector:setup": "npm run build --silent && node dist/apps/local-connector/src/cli.js setup",
-    "connector:doctor": "npm run build --silent && node dist/apps/local-connector/src/cli.js doctor",
-    "connector:remove": "npm run build --silent && node dist/apps/local-connector/src/cli.js remove",
+    "connector:setup": "pnpm run --silent build && node dist/apps/local-connector/src/cli.js setup",
+    "connector:doctor": "pnpm run --silent build && node dist/apps/local-connector/src/cli.js doctor",
+    "connector:remove": "pnpm run --silent build && node dist/apps/local-connector/src/cli.js remove",
     "probe:yahoo": "node dist/apps/local-connector/src/probes/yahoo-capabilities.js",
     "probe:keyring": "node dist/apps/local-connector/src/probes/keyring.js",
     "smoke:stdio": "node dist/tests/contract/stdio-smoke.js",
     "smoke:yahoo-metadata": "node dist/tests/contract/yahoo-live-smoke.js",
-    "check": "npm run typecheck && npm test && npm run build && npm run smoke:stdio"
+    "check": "pnpm run typecheck && pnpm test && pnpm run build && pnpm run smoke:stdio"
   },
   "dependencies": {
     "@modelcontextprotocol/client": "2.1.0",

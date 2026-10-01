@@ -1,9 +1,9 @@
-import { KeyringCredentialStore } from "../../../packages/yahoo-imap/src/credentials.js";
+import { OsCredentialStore } from "../../../packages/yahoo-imap/src/credentials.js";
 import { verifyYahooCredentials } from "../../../packages/yahoo-imap/src/provider.js";
 import { promptLine, promptSecret } from "./prompt-secret.js";
 
 const command = process.argv[2];
-const store = new KeyringCredentialStore();
+const store = new OsCredentialStore();
 
 async function main(): Promise<void> {
   if (command === "setup") {
@@ -13,7 +13,7 @@ async function main(): Promise<void> {
     try {
       await verifyYahooCredentials({ email, appPassword });
       await store.save({ email, appPassword });
-      process.stdout.write("Yahoo credentials verified and saved in the operating-system credential store.\n");
+      process.stdout.write(`Yahoo credentials verified and saved using ${store.backend}.\n`);
     } finally {
       appPassword = "";
     }
@@ -23,7 +23,7 @@ async function main(): Promise<void> {
     let credentials = await store.load();
     try {
       await verifyYahooCredentials(credentials);
-      process.stdout.write("Yahoo credential lookup, TLS, and authentication passed.\n");
+      process.stdout.write(`Yahoo credential lookup using ${store.backend}, TLS, and authentication passed.\n`);
     } finally {
       credentials = { email: "", appPassword: "" };
     }
