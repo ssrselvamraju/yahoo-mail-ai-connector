@@ -24,6 +24,6 @@ Status: implementation in progress
 
 ## Remaining gates
 
-- Test message fetch only against a designated synthetic test message.
+- Run the checked-in `smoke:yahoo-message` test against a designated unread synthetic message; the harness is implemented but the live result is not yet recorded.
 - Complete Muse Code host testing when Muse Code is installed.
 - Add macOS and Linux credential-backend verification before claiming support for those platforms.

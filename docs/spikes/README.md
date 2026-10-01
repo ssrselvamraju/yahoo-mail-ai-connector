@@ -43,6 +43,22 @@ The app password is entered through a hidden TTY prompt. Do not pass it as an ar
 
 The JSON report contains operational metadata only. Review mailbox names before sharing the report because custom folder names can themselves be sensitive.
 
+## Designated synthetic-message fetch
+
+This live test is deliberately separate from normal CI and the metadata-only smoke test. Send the dedicated Yahoo test account one message, leave it unread, and give it unique synthetic values such as:
+
+- Subject: `MCP synthetic unread 7f3c91b2`
+- Body: `MCP synthetic body canary 41e8d670`
+
+Build, then provide those exact synthetic values:
+
+```powershell
+pnpm run build
+pnpm run smoke:yahoo-message -- --subject="MCP synthetic unread 7f3c91b2" --body-canary="MCP synthetic body canary 41e8d670"
+```
+
+The test refuses to proceed unless it finds exactly one unread message with the exact subject. It fetches a bounded body, verifies the canary without printing the subject, body, addresses, or reference, and searches again to prove the message remained unread. The subject and canary are synthetic test data, not credentials; do not use real or sensitive mail content.
+
 ## Client compatibility
 
 The stdio contract smoke test is client-neutral. Manual host tests follow after it passes:

@@ -22,6 +22,7 @@
     "probe:keyring": "node dist/apps/local-connector/src/probes/keyring.js",
     "smoke:stdio": "node dist/tests/contract/stdio-smoke.js",
     "smoke:yahoo-metadata": "node dist/tests/contract/yahoo-live-smoke.js",
+    "smoke:yahoo-message": "node dist/tests/contract/yahoo-live-message-smoke.js",
     "check": "pnpm run typecheck && pnpm test && pnpm run build && pnpm run smoke:stdio"
   },
   "dependencies": {
