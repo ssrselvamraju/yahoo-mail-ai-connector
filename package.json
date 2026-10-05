@@ -15,15 +15,17 @@
     "test:watch": "vitest",
     "mcp:fake": "node dist/apps/local-connector/src/stdio.js --provider=fake",
     "mcp:yahoo": "node dist/apps/local-connector/src/stdio.js --provider=yahoo",
+    "mcp:http:fake": "node dist/apps/remote-connector/src/http.js",
     "connector:setup": "pnpm run --silent build && node dist/apps/local-connector/src/cli.js setup",
     "connector:doctor": "pnpm run --silent build && node dist/apps/local-connector/src/cli.js doctor",
     "connector:remove": "pnpm run --silent build && node dist/apps/local-connector/src/cli.js remove",
     "probe:yahoo": "node dist/apps/local-connector/src/probes/yahoo-capabilities.js",
     "probe:keyring": "node dist/apps/local-connector/src/probes/keyring.js",
     "smoke:stdio": "node dist/tests/contract/stdio-smoke.js",
+    "smoke:http": "node dist/tests/contract/http-smoke.js",
     "smoke:yahoo-metadata": "node dist/tests/contract/yahoo-live-smoke.js",
     "smoke:yahoo-message": "node dist/tests/contract/yahoo-live-message-smoke.js",
-    "check": "pnpm run typecheck && pnpm test && pnpm run build && pnpm run smoke:stdio"
+    "check": "pnpm run typecheck && pnpm test && pnpm run build && pnpm run smoke:stdio && pnpm run smoke:http"
   },
   "dependencies": {
     "@modelcontextprotocol/client": "2.1.0",

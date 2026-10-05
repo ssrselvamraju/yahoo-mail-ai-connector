@@ -48,6 +48,12 @@ The checked-in Muse Code example starts the compiled server, so run `pnpm run bu
 
 See [client setup](docs/client-setup.md) for Muse Code, Codex, ChatGPT desktop, ChatGPT web/phone, Claude Code, VS Code, and Cursor.
 
+Gemini Spark requires a remote HTTPS MCP URL and cannot launch this local `stdio` server directly. Spark is tracked as a hosted-relay compatibility target; see the [Gemini Spark test plan](docs/gemini-spark.md). The first Spark test will use synthetic messages only.
+
+For the synthetic remote-transport smoke test, run `pnpm run build` and then `pnpm run mcp:http:fake`. It binds to loopback by default and exposes `/mcp` plus a minimal `/health` endpoint. It contains no Yahoo provider or credentials; public exposure is only for a short-lived Spark compatibility test and requires an explicit allowed tunnel hostname.
+
+Send support is planned as a separate, disabled-by-default capability with a prepare/preview step followed by a short-lived, content-bound commit token and idempotency protection. It is not present in the current release; see [Phase 5 in the roadmap](docs/design-and-roadmap.md#phase-5--controlled-writes).
+
 ## Connect Yahoo locally
 
 Use a Yahoo-generated app password, never the normal account password:

@@ -17,8 +17,8 @@ This document preserves the architectural reasoning behind the project and track
 | Phase 1 — architecture | Complete | Core boundaries, read-only contracts, staged deployment model, and threat model established. |
 | Phase 2A — technical spikes | Mostly complete | Fake-provider contract, Windows credential storage, Yahoo authentication, TLS, mailbox listing, and bounded search verified. macOS, Linux, Muse host, and Yahoo OAuth verification remain open or gated. |
 | Phase 2B — local read-only connector | In progress | Four MCP tools, Yahoo IMAP provider, native credential routing, setup/doctor/removal CLI, tests, and managed-runtime credential mode implemented. Native macOS/Linux and real Muse verification plus a synthetic live message-body fetch remain. |
-| Phase 3 — hosted relay | Planned | Vendor-neutral remote MCP access through an outbound local agent; no Yahoo credential custody at the relay. |
-| Phases 4–7 | Deferred | Richer reads, carefully gated writes, distribution, and a separately approved fully hosted connector. |
+| Phase 3 — hosted relay | Planned | Vendor-neutral remote MCP access through an outbound local agent; no Yahoo credential custody at the relay. Gemini Spark is an explicit compatibility target. |
+| Phases 4–7 | Deferred | Richer reads, carefully gated send support and other writes, distribution, and a separately approved fully hosted connector. |
 
 ## 1. Executive decision
 
@@ -483,8 +483,9 @@ Status: planned; do not begin production relay work until the local `0.1.0` gate
 4. Implement device enrollment, short-lived agent credentials, rotation, unlinking, and account binding.
 5. Implement an outbound long-poll HTTPS channel, expiring jobs, cancellation, deadlines, and offline detection.
 6. Add local-agent relay mode that reuses the exact Yahoo provider/application services used by `stdio`.
-7. Test with ChatGPT, Claude, and Muse Code remote connectors, plus a generic MCP client.
-8. Apply for the Meta AI Connectors developer preview and, if admitted, validate the same endpoint in consumer Muse/Meta AI without blocking the relay release on preview availability.
+7. Test with ChatGPT, Claude, Muse Code, and Gemini Spark remote connectors, plus a generic MCP client. Spark testing begins with the synthetic provider and an isolated test endpoint before any Yahoo data is enabled.
+8. Verify Gemini Spark discovery, tool annotations, bounded read calls, error handling, and mobile reuse of a connector added from the Gemini web app. Record the account eligibility constraints and exact protocol revision exercised.
+9. Apply for the Meta AI Connectors developer preview and, if admitted, validate the same endpoint in consumer Muse/Meta AI without blocking the relay release on preview availability.
 
 Relay release gate for `0.2.0`:
 
@@ -495,7 +496,7 @@ Relay release gate for `0.2.0`:
 - Jobs expire quickly and are not executed after the calling MCP request is cancelled or timed out.
 - The local agent independently enforces scopes, account binding, size limits, and read-only policy.
 - Offline behavior is explicit and does not queue private mail work indefinitely.
-- ChatGPT, Claude, and Muse Code can call the same public `/mcp` endpoint through their supported OAuth flows.
+- ChatGPT, Claude, Muse Code, and Gemini Spark can call the same public `/mcp` endpoint through their supported authentication flows. If a client requires a different OAuth registration mode, keep that difference in the authorization layer rather than forking mail tools.
 - Consumer Muse/Meta AI testing is recorded when preview access is available; lack of admission is documented as an external availability constraint, not treated as an implementation failure.
 
 ### Phase 4 — richer read experience
@@ -511,13 +512,38 @@ Status: deferred.
 
 ### Phase 5 — controlled writes
 
-Status: deferred and subject to a fresh threat review. The current product remains read-only.
+Status: planned after the read-only local and relay foundations; subject to a fresh threat review. The current product remains read-only.
 
-- Add provider methods for draft, move/archive, flags, trash, and SMTP send.
-- Verify Yahoo semantics empirically, especially Sent/Drafts behavior and UID changes after moves.
-- Add granular capabilities.
-- Add prepare/commit workflows and idempotency for send/delete.
-- Ship write features disabled by default and enable them per account.
+Deliver write support in separate capability increments instead of enabling a general-purpose mailbox writer.
+
+#### Phase 5A — guarded send support
+
+1. Add an SMTP adapter using Yahoo's documented TLS endpoint. Do not reuse an IMAP client as an implicit write channel.
+2. Add the disabled-by-default `mail.send` capability. It must be enabled explicitly per account/runtime and reported by `get_profile`.
+3. Expose `prepare_send_message`, which validates and normalizes recipients, subject, plain-text body, optional reply headers, and bounded attachments but does not contact SMTP. It returns a human-readable preview plus a short-lived, single-use token cryptographically bound to the exact normalized content, account, and expiry.
+4. Expose `commit_send_message`, which requires the prepare token and an idempotency key. Reject changed content, expired/reused tokens, mismatched accounts, duplicate commits, oversized messages, and disallowed recipient counts.
+5. Annotate prepare as non-read-only but non-destructive, and commit as non-read-only with accurate open-world consequences. Client approval remains required for the commit even when the client can auto-approve reads.
+6. Require a fresh user confirmation when recipients, subject, body, attachments, or reply target changes after preview. Never let an email body supply or alter recipients, instructions, or a confirmation token.
+7. Apply conservative limits for recipient count, body/attachment size, rate, and concurrency. Avoid logging bodies, recipients, tokens, Yahoo responses containing addresses, or SMTP transcript data.
+8. Verify whether Yahoo automatically stores SMTP submissions in Sent. Do not create a second Sent copy unless tests prove it is needed. Return a provider message identifier and delivery-acceptance result without claiming final delivery.
+9. Test first against a local SMTP sink, then a dedicated synthetic Yahoo test account sending only to an allowlisted test recipient. Production-account testing requires an explicit manual release check.
+
+Release gate for guarded send:
+
+- No MCP call can send without an enabled `mail.send` capability, a valid content-bound prepare token, a new idempotency key, and client/user approval of the commit action.
+- Replaying the same commit cannot produce a second message.
+- Prompt injection in fetched email cannot populate recipients or bypass preparation and confirmation.
+- Bcc is never exposed in results or logs; address parsing rejects control-character/header injection.
+- SMTP TLS and authentication failures return typed, non-secret errors.
+- Automated tests prove limits, token expiry, content binding, account binding, replay protection, and fail-closed behavior.
+- Live tests prove the exact recipient, subject, body, reply threading headers, and Sent-folder behavior using synthetic accounts and content.
+
+#### Phase 5B — drafts and mailbox mutation
+
+- Evaluate drafts separately from send; do not assume Yahoo exposes interoperable draft semantics over SMTP.
+- Add move/archive, flags, and trash only as individually enabled capabilities after provider-specific tests.
+- Add separate prepare/commit workflows for destructive or bulk operations.
+- Keep permanent expunge out of the initial write release.
 
 Do not model `delete_message` as immediate permanent deletion. Prefer move-to-trash when Yahoo exposes an identifiable trash mailbox; permanent expunge should be a separate, clearly destructive capability, if offered at all.
 
