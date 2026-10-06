@@ -84,7 +84,7 @@ For a Muse-managed VM or another reviewed runtime with a real managed secret sto
 - The keyring probe uses a generated canary and removes it after verification.
 - Do not pass a Yahoo app password on the command line or put it in an environment file.
 
-Current platform verification and remaining release gates are tracked in [Phase 2B status](docs/phase-2b-status.md) and [spike results](docs/spikes/results.md). Windows Credential Manager and Linux Secret Service have passed native-host canary verification. Ubuntu synthetic tests and both MCP transport checks also pass. macOS Keychain still requires native-host canary verification, and Ubuntu live Yahoo authentication and MCP metadata checks pass; the designated synthetic unread-message body check remains pending.
+Current platform verification and remaining release gates are tracked in [Phase 2B status](docs/phase-2b-status.md) and [spike results](docs/spikes/results.md). Windows Credential Manager and Linux Secret Service have passed native-host canary verification. Ubuntu synthetic tests and both MCP transport checks also pass. macOS Keychain still requires native-host canary verification, and Ubuntu live Yahoo authentication and MCP metadata checks pass; the designated synthetic unread-message body check also passes, including verification that the message remains unread.
 
 ## License
 

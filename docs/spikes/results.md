@@ -12,6 +12,7 @@ Status legend: `not run`, `pass`, `fail`, `blocked`.
 | Yahoo IMAP capability probe | pass | Live Yahoo IMAP verified on Windows: TLS was encrypted and certificate-authorized, app-password authentication succeeded, mailbox listing succeeded, Inbox opened read-only, and a server-side unread UID search completed. The report was observed in the local terminal only; account identity, mailbox names/counts, and credentials are intentionally not recorded here. |
 | Yahoo OAuth feasibility | blocked | Requires the user to create or provide access to a disposable Yahoo developer application. |
 | Muse Code local compatibility | blocked | Compiled-server configuration and smoke prompt are ready, but the `muse` executable is not installed on this Windows host. |
+| Codex local compatibility | pass | Account owner confirmed tool discovery and read-only Yahoo search/fetch in a fresh Codex chat on Ubuntu (2026-10-06). |
 | Other client manual compatibility | not run | Run after automated contract checks pass. |
 
 The subsequent Phase 2B stored-credential doctor and redacted live MCP metadata smoke test also pass; see [`phase-2b-status.md`](../phase-2b-status.md).
@@ -23,3 +24,5 @@ Verified with Node.js 24.19.0 and pnpm 11.19.0 after installing dependencies fro
 Ubuntu interactive `connector:setup` and `connector:doctor` passed on 2026-10-06: credentials were verified and saved in Linux Secret Service, then stored-credential lookup, TLS, and Yahoo authentication passed. Account identifiers and secrets are omitted. Ubuntu live MCP metadata and designated synthetic-message body checks remain pending.
 
 Ubuntu read-only MCP metadata verification passed on 2026-10-06 with explicit account-owner authorization: profile lookup, mailbox listing, and a bounded one-result search succeeded. No body was fetched or sensitive result printed. Linux live-smoke child processes explicitly inherit `DBUS_SESSION_BUS_ADDRESS` and `XDG_RUNTIME_DIR` to reach desktop Secret Service; the SDK default environment omits them. The designated synthetic unread-message body gate remains open.
+
+Ubuntu designated synthetic-message body verification passed on 2026-10-06: `smoke:yahoo-message` found exactly one unread synthetic message, verified the body canary through a bounded fetch, and searched again to prove it remained unread. The test emitted only boolean verification results; no credentials, addresses, message references, subjects, or bodies were printed. This closes the Ubuntu unread-preservation evidence gate.

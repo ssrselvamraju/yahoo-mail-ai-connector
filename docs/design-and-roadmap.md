@@ -20,7 +20,7 @@ Complete the local read-only verification gates, then implement local guarded se
 |---|---|---|
 | Phase 1 — architecture | Complete | Core boundaries, read-only contracts, staged deployment model, and threat model established. |
 | Phase 2A — technical spikes | Mostly complete | Fake-provider contract, Windows credential storage, Yahoo authentication, TLS, mailbox listing, and bounded search verified. Native Linux Secret Service and Ubuntu synthetic checks also pass. macOS, Muse Code local host, and Yahoo OAuth verification remain open or gated. |
-| Phase 2B — local read-only connector | In progress | Four MCP tools, Yahoo IMAP provider, native credential routing, setup/doctor/removal CLI, tests, and managed-runtime credential mode implemented. Native macOS, Muse Code local host, and a synthetic live message-body fetch remain; Linux Secret Service and Ubuntu synthetic checks pass. Muse managed-VM setup is reported complete, with sanitized lessons documented separately. |
+| Phase 2B — local read-only connector | In progress | Four MCP tools, Yahoo IMAP provider, native credential routing, setup/doctor/removal CLI, tests, and managed-runtime credential mode implemented. Native macOS and Muse Code local host verification remain; Linux Secret Service, Ubuntu synthetic checks, Codex local compatibility, and the designated live unread-message body check pass. Muse managed-VM setup is reported complete, with sanitized lessons documented separately. |
 | Phase 3 — hosted relay | Planned | Vendor-neutral remote MCP access through an outbound local agent; no Yahoo credential custody at the relay. Gemini Spark is an explicit compatibility target. |
 | Phase 5A — guarded send | Next after local read verification | Disabled-by-default local send with preparation, confirmation, and replay protection; precedes Spark compatibility. |
 | Other Phases 4–7 work | Deferred | Richer reads, other writes, distribution, and a separately approved fully hosted connector. |
@@ -641,7 +641,7 @@ Open decisions:
 
 Close the remaining local `0.1.0` evidence and usability gates before starting the hosted relay:
 
-1. Fetch a designated synthetic live Yahoo message and prove the operation does not set `\\Seen`.
+1. Preserve the passing Ubuntu designated synthetic-message evidence: bounded body fetch and a second search confirmed unread status on 2026-10-06.
 2. Run the credential-store canary on a real macOS host. Linux Secret Service has passed native Ubuntu verification; complete the separate Ubuntu live Yahoo checks.
 3. Complete Muse Code local and managed-VM tool-discovery tests with the synthetic provider first, followed by bounded Yahoo tests.
 4. Add polished installation and MCP-client setup instructions for the platforms that pass native verification.

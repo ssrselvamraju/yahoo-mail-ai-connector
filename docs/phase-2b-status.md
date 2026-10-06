@@ -23,8 +23,10 @@ Status: implementation in progress
 - Stored-credential `doctor` check for keychain retrieval, strict TLS, and Yahoo authentication on Windows and Ubuntu. Ubuntu interactive setup and doctor passed with Linux Secret Service (2026-10-06).
 - Redacted live MCP test on Windows and Ubuntu for profile, mailbox listing, and bounded one-result metadata search; no message body was fetched and no account/mail metadata was emitted.
 
+- Ubuntu designated synthetic-message `smoke:yahoo-message` passed (2026-10-06): exact unread match, bounded body canary match, and a second search proving the message remained unread; no sensitive output emitted.
+- Codex local Yahoo MCP discovery and read-only search/fetch were confirmed by the account owner in a fresh chat (2026-10-06).
+
 ## Remaining gates
 
-- Run the checked-in `smoke:yahoo-message` test against a designated unread synthetic message; the harness is implemented but the live result is not yet recorded.
 - Complete Muse Code local host testing when Muse Code is installed. Muse managed-VM setup is reported complete and its sanitized setup lessons are recorded in `muse-managed-vm.md`; that separate deployment does not establish Muse Code local-host compatibility.
-- Add native macOS credential-backend verification. Linux Secret Service has passed the native Ubuntu canary probe; Ubuntu live MCP metadata checks pass; the designated synthetic-message body check remains pending.
+- Add native macOS credential-backend verification. Linux Secret Service has passed the native Ubuntu canary probe; Ubuntu live MCP metadata checks pass; the designated synthetic-message body check also passes.
