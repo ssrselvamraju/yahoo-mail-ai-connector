@@ -1,6 +1,6 @@
 # Gemini Spark compatibility plan
 
-Status: local synthetic HTTP contract verified; public Spark connection still pending. The Yahoo connector remains local `stdio` only, while Spark requires a reachable MCP server URL.
+Status: deferred until local guarded send support passes its release gates. Local synthetic HTTP contract verified; public Spark connection still pending. The Yahoo connector remains local `stdio` only, while Spark requires a reachable MCP server URL.
 
 Google's current Spark custom-app flow accepts an MCP server URL added from the Gemini web app. A connected custom app can then be used from Spark on web and mobile. This makes Spark a Phase 3 remote-transport target, not a Phase 2 local-client target.
 

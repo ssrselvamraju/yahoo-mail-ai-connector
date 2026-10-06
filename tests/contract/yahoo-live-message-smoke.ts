@@ -21,6 +21,11 @@ if (subject.length < 12 || bodyCanary.length < 12) {
 
 const serverPath = resolve("dist/apps/local-connector/src/stdio.js");
 const transport = new StdioClientTransport({
+  // The SDK default environment omits the Linux desktop Secret Service session.
+  env: Object.fromEntries(
+    ["DBUS_SESSION_BUS_ADDRESS", "XDG_RUNTIME_DIR"]
+      .flatMap((key) => process.env[key] === undefined ? [] : [[key, process.env[key]!]]),
+  ),
   command: process.execPath,
   args: [serverPath, "--provider=yahoo"],
   cwd: process.cwd(),
@@ -88,7 +93,10 @@ try {
   }
 
   const stderr = Buffer.concat(stderrChunks).toString("utf8");
-  if (stderr.trim()) throw new Error("The MCP server emitted stderr during the synthetic live-message test.");
+  const expectedStartup = "Yahoo Mail AI Connector is serving Yahoo Mail read-only over stdio.";
+  if (stderr.trim() !== expectedStartup) {
+    throw new Error("The MCP server emitted unexpected stderr during the synthetic live-message test.");
+  }
 
   process.stdout.write(
     `${JSON.stringify({ ok: true, exactSyntheticMatch: true, bodyCanaryMatched: true, remainedUnread: true, sensitiveOutputEmitted: false })}\n`,

@@ -10,15 +10,20 @@ Scope: local-first, open-source MCP connector followed by a hosted relay and, if
 
 This document preserves the architectural reasoning behind the project and tracks planned work. It intentionally includes decisions and designs that are not implemented yet. For the authoritative description of the code that exists today, see [`architecture.md`](architecture.md). For verification state and remaining release gates, see [`phase-2b-status.md`](phase-2b-status.md) and [`spikes/results.md`](spikes/results.md). External platform facts are dated research, not permanent guarantees; re-verify them against current official documentation before implementing the affected phase.
 
+## Delivery priority
+
+Complete the local read-only verification gates, then implement local guarded send (Phase 5A) before resuming Gemini Spark compatibility. Send remains disabled by default and requires preparation, a content-bound confirmation token, and replay/idempotency controls. Verify it against a local SMTP sink first. Spark stays deferred until guarded send passes its release gates; Spark is not a prerequisite for the initial relay release. Phase numbers identify feature tracks rather than delivery order.
+
 ## Current progress
 
 | Phase | State | Summary |
 |---|---|---|
 | Phase 1 — architecture | Complete | Core boundaries, read-only contracts, staged deployment model, and threat model established. |
-| Phase 2A — technical spikes | Mostly complete | Fake-provider contract, Windows credential storage, Yahoo authentication, TLS, mailbox listing, and bounded search verified. macOS, Linux, Muse host, and Yahoo OAuth verification remain open or gated. |
-| Phase 2B — local read-only connector | In progress | Four MCP tools, Yahoo IMAP provider, native credential routing, setup/doctor/removal CLI, tests, and managed-runtime credential mode implemented. Native macOS/Linux and real Muse verification plus a synthetic live message-body fetch remain. |
+| Phase 2A — technical spikes | Mostly complete | Fake-provider contract, Windows credential storage, Yahoo authentication, TLS, mailbox listing, and bounded search verified. Native Linux Secret Service and Ubuntu synthetic checks also pass. macOS, Muse Code local host, and Yahoo OAuth verification remain open or gated. |
+| Phase 2B — local read-only connector | In progress | Four MCP tools, Yahoo IMAP provider, native credential routing, setup/doctor/removal CLI, tests, and managed-runtime credential mode implemented. Native macOS, Muse Code local host, and a synthetic live message-body fetch remain; Linux Secret Service and Ubuntu synthetic checks pass. Muse managed-VM setup is reported complete, with sanitized lessons documented separately. |
 | Phase 3 — hosted relay | Planned | Vendor-neutral remote MCP access through an outbound local agent; no Yahoo credential custody at the relay. Gemini Spark is an explicit compatibility target. |
-| Phases 4–7 | Deferred | Richer reads, carefully gated send support and other writes, distribution, and a separately approved fully hosted connector. |
+| Phase 5A — guarded send | Next after local read verification | Disabled-by-default local send with preparation, confirmation, and replay protection; precedes Spark compatibility. |
+| Other Phases 4–7 work | Deferred | Richer reads, other writes, distribution, and a separately approved fully hosted connector. |
 
 ## 1. Executive decision
 
@@ -483,7 +488,7 @@ Status: planned; do not begin production relay work until the local `0.1.0` gate
 4. Implement device enrollment, short-lived agent credentials, rotation, unlinking, and account binding.
 5. Implement an outbound long-poll HTTPS channel, expiring jobs, cancellation, deadlines, and offline detection.
 6. Add local-agent relay mode that reuses the exact Yahoo provider/application services used by `stdio`.
-7. Test with ChatGPT, Claude, Muse Code, and Gemini Spark remote connectors, plus a generic MCP client. Spark testing begins with the synthetic provider and an isolated test endpoint before any Yahoo data is enabled.
+7. Test with ChatGPT, Claude, Muse Code, plus a generic MCP client. Defer Gemini Spark compatibility until local guarded send passes its release gates. Spark testing begins with the synthetic provider and an isolated test endpoint before any Yahoo data is enabled.
 8. Verify Gemini Spark discovery, tool annotations, bounded read calls, error handling, and mobile reuse of a connector added from the Gemini web app. Record the account eligibility constraints and exact protocol revision exercised.
 9. Apply for the Meta AI Connectors developer preview and, if admitted, validate the same endpoint in consumer Muse/Meta AI without blocking the relay release on preview availability.
 
@@ -496,7 +501,7 @@ Relay release gate for `0.2.0`:
 - Jobs expire quickly and are not executed after the calling MCP request is cancelled or timed out.
 - The local agent independently enforces scopes, account binding, size limits, and read-only policy.
 - Offline behavior is explicit and does not queue private mail work indefinitely.
-- ChatGPT, Claude, Muse Code, and Gemini Spark can call the same public `/mcp` endpoint through their supported authentication flows. If a client requires a different OAuth registration mode, keep that difference in the authorization layer rather than forking mail tools.
+- ChatGPT, Claude, and Muse Code can call the same public `/mcp` endpoint through their supported authentication flows. If a client requires a different OAuth registration mode, keep that difference in the authorization layer rather than forking mail tools.
 - Consumer Muse/Meta AI testing is recorded when preview access is available; lack of admission is documented as an external availability constraint, not treated as an implementation failure.
 
 ### Phase 4 — richer read experience
@@ -512,7 +517,7 @@ Status: deferred.
 
 ### Phase 5 — controlled writes
 
-Status: planned after the read-only local and relay foundations; subject to a fresh threat review. The current product remains read-only.
+Status: local guarded send is prioritized after the local read-only gates and before Spark compatibility; relay integration follows separately, subject to a fresh threat review. The current product remains read-only.
 
 Deliver write support in separate capability increments instead of enabling a general-purpose mailbox writer.
 
@@ -622,7 +627,7 @@ Resolved decisions:
 
 - The repository name is `yahoo-mail-ai-connector`, paired with an explicit unofficial/non-endorsed disclaimer.
 - The project uses Apache-2.0.
-- Runtime credential routing targets Windows Credential Manager, macOS Keychain, and Linux Secret Service, with no plaintext fallback. Windows has native-host verification; macOS and Linux remain release evidence gates.
+- Runtime credential routing targets Windows Credential Manager, macOS Keychain, and Linux Secret Service, with no plaintext fallback. Windows and Linux Secret Service have native-host canary verification; macOS remains a release evidence gate.
 
 Open decisions:
 
@@ -637,7 +642,7 @@ Open decisions:
 Close the remaining local `0.1.0` evidence and usability gates before starting the hosted relay:
 
 1. Fetch a designated synthetic live Yahoo message and prove the operation does not set `\\Seen`.
-2. Run the credential-store canary on real macOS and Linux Secret Service hosts before claiming those platforms as runtime-verified.
+2. Run the credential-store canary on a real macOS host. Linux Secret Service has passed native Ubuntu verification; complete the separate Ubuntu live Yahoo checks.
 3. Complete Muse Code local and managed-VM tool-discovery tests with the synthetic provider first, followed by bounded Yahoo tests.
 4. Add polished installation and MCP-client setup instructions for the platforms that pass native verification.
 5. Decide whether Yahoo OAuth research and OpenAI Secure MCP Tunnel documentation belong in `0.1.x` or remain deferred.
