@@ -1,4 +1,6 @@
 import type {
+  SenderScanInput,
+  SenderScanResult,
   MailMessage,
   MailProvider,
   Mailbox,
@@ -115,6 +117,8 @@ export class FakeMailProvider implements MailProvider {
     const filtered = messages.filter((message) => {
       const searchable = `${message.subject} ${message.preview} ${message.from.map((item) => item.address).join(" ")}`;
       return (
+        (input.uidAfter === undefined || Number(message.messageRef.split(":").at(-1)) > input.uidAfter) &&
+        (input.uidBefore === undefined || Number(message.messageRef.split(":").at(-1)) < input.uidBefore) &&
         includes(searchable, input.query) &&
         includes(message.subject, input.subject) &&
         addressesContain(message.from, input.from) &&
@@ -136,6 +140,21 @@ export class FakeMailProvider implements MailProvider {
     };
     if (nextOffset < filtered.length) result.nextCursor = String(nextOffset);
     return result;
+  }
+
+  async scanSenders(input: SenderScanInput): Promise<SenderScanResult> {
+    const page = await this.searchMessages({ mailboxId: input.mailboxId, cursor: input.cursor, limit: 100 });
+    const domains = new Map<string, { domain: string; count: number; sampleSubjects: string[] }>();
+    for (const message of page.messages) {
+      for (const domain of new Set(message.from.map(a => a.address.split("@").at(-1) ?? "(unknown)"))) {
+        const bucket = domains.get(domain) ?? { domain, count: 0, sampleSubjects: [] };
+        bucket.count++;
+        if (bucket.sampleSubjects.length < input.sampleSubjects) bucket.sampleSubjects.push(message.subject.slice(0,200));
+        domains.set(domain, bucket);
+      }
+    }
+    return { domains: [...domains.values()], scannedMessages: page.messages.length, complete: !page.nextCursor,
+      ...(page.nextCursor ? { nextCursor: page.nextCursor } : {}), limitations: ["Synthetic page counts only."] };
   }
 
   async fetchMessage(messageRef: string, maxBodyChars: number): Promise<MailMessage> {

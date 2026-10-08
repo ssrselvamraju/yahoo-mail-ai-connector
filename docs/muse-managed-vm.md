@@ -36,7 +36,7 @@ The runtime needs Node.js 22 or newer, outbound TLS access to `imap.mail.yahoo.c
 
 ## Validation order
 
-1. Deploy first with `--provider=fake`; confirm all four tools appear and run the synthetic receipt prompt.
+1. Deploy first with `--provider=fake`; confirm all five read-only tools appear and run the synthetic receipt prompt.
 2. Add the three managed configuration values above and switch to `--provider=yahoo`.
 3. Call `list_mailboxes`. `get_profile` reads local configuration and does not connect to Yahoo, so it can verify tool wiring but cannot prove credentials, network access, or Yahoo availability. `list_mailboxes` is the first end-to-end Yahoo check.
 4. Run a bounded metadata search.

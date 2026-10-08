@@ -1,6 +1,6 @@
 # Connect an MCP client
 
-These instructions configure the compiled local `stdio` server. Start with the synthetic provider, verify the four tools, and only then switch the final argument from `--provider=fake` to `--provider=yahoo`.
+These instructions configure the compiled local `stdio` server. Start with the synthetic provider, verify the five read-only tools, and only then switch the final argument from `--provider=fake` to `--provider=yahoo`.
 
 ## Prepare the connector
 
@@ -99,3 +99,7 @@ In VS Code, use **MCP: List Servers**. In Cursor, inspect **Available Tools** or
 - Use an absolute path and ensure `node` is available to the client process.
 - Rebuild after code changes with `pnpm run build`, then restart or refresh the MCP server.
 - Never add `YAHOO_APP_PASSWORD`, the normal Yahoo password, or credential-store exports to an MCP configuration file.
+
+## History and optional send
+
+The default server adds read-only `scan_senders` and `search_messages` history mode. See [history and guarded send](history-and-send.md). Add `--enable-send` only to the local Yahoo stdio command when you explicitly want guarded plain-text send. Keep host approval enabled for writes; show the exact preparation preview and obtain user confirmation before commit. Do not enable send on the synthetic HTTP endpoint.

@@ -48,6 +48,9 @@ export interface MailMessage extends MessageSummary {
 }
 
 export interface SearchMessagesInput {
+  mode?: "recent" | "history" | undefined;
+  uidAfter?: number | undefined;
+  uidBefore?: number | undefined;
   query?: string | undefined;
   from?: string[] | undefined;
   to?: string[] | undefined;
@@ -66,12 +69,28 @@ export interface SearchMessagesResult {
   nextCursor?: string | undefined;
   searchScope: "server" | "bounded_local" | "synthetic";
   limitations: string[];
+  scannedRange?: { uidAfter: number; uidBefore: number } | undefined;
+  complete?: boolean | undefined;
+}
+
+export interface SenderScanInput {
+  mailboxId?: string | undefined;
+  cursor?: string | undefined;
+  sampleSubjects: number;
+}
+export interface SenderScanResult {
+  domains: { domain: string; count: number; sampleSubjects: string[] }[];
+  scannedMessages: number;
+  nextCursor?: string | undefined;
+  complete: boolean;
+  limitations: string[];
 }
 
 export interface MailProvider {
   getProfile(): Promise<MailProfile>;
   listMailboxes(includeCounts: boolean): Promise<Mailbox[]>;
   searchMessages(input: SearchMessagesInput): Promise<SearchMessagesResult>;
+  scanSenders?(input: SenderScanInput): Promise<SenderScanResult>;
   fetchMessage(messageRef: string, maxBodyChars: number): Promise<MailMessage>;
 }
 
@@ -82,7 +101,11 @@ export class MailConnectorError extends Error {
       | "not_found"
       | "authentication_failed"
       | "provider_unavailable"
-      | "unsupported",
+      | "unsupported"
+      | "invalid_input"
+      | "network_unavailable"
+      | "tls_failed"
+      | "timeout",
     message: string,
   ) {
     super(message);

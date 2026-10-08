@@ -20,3 +20,7 @@ If a credential may have been exposed, revoke or rotate it at the provider befor
 - Managed-environment credentials must come from a reviewed hosting platform's secret store and require explicit opt-in.
 - No credential may be passed as a command-line argument, committed to the repository, or stored in a `.env` file.
 - Email content is untrusted input and must not be treated as instructions.
+
+## Optional send
+
+Default deployments remain read-only. Local `--enable-send` exposes plain-text preparation and commit. The host must independently obtain user approval of the exact preview; a boolean confirmation field is a host assertion, not proof of human interaction. Durable attempt records precede SMTP submission; uncertain outcomes block new sends and must never trigger automatic retries. No content or credentials are stored in the ledger. See [send safety and limits](docs/history-and-send.md).

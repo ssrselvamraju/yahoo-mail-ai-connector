@@ -22,7 +22,7 @@ Complete the local read-only verification gates, then implement local guarded se
 | Phase 2A — technical spikes | Mostly complete | Fake-provider contract, Windows credential storage, Yahoo authentication, TLS, mailbox listing, and bounded search verified. Native Linux Secret Service and Ubuntu synthetic checks also pass. macOS, Muse Code local host, and Yahoo OAuth verification remain open or gated. |
 | Phase 2B — local read-only connector | In progress | Four MCP tools, Yahoo IMAP provider, native credential routing, setup/doctor/removal CLI, tests, and managed-runtime credential mode implemented. Native macOS and Muse Code local host verification remain; Linux Secret Service, Ubuntu synthetic checks, Codex local compatibility, and the designated live unread-message body check pass. Muse managed-VM setup is reported complete, with sanitized lessons documented separately. |
 | Phase 3 — hosted relay | Planned | Vendor-neutral remote MCP access through an outbound local agent; no Yahoo credential custody at the relay. Gemini Spark is an explicit compatibility target. |
-| Phase 5A — guarded send | Next after local read verification | Disabled-by-default local send with preparation, confirmation, and replay protection; precedes Spark compatibility. |
+| Phase 5A — guarded send | Initial local implementation | Disabled-by-default plain-text send, preview/confirmation, and durable replay protection. Local SMTP sink verification precedes separately approved live Yahoo tests; Spark stays deferred. |
 | Other Phases 4–7 work | Deferred | Richer reads, other writes, distribution, and a separately approved fully hosted connector. |
 
 ## 1. Executive decision
@@ -476,7 +476,7 @@ Release gate for `0.1.0`:
 - `fetch_message` provably does not mark unread mail as read.
 - Search is bounded and reports unsupported/partial filters.
 - Timeouts, auth failures, stale refs, malformed MIME, and oversized messages produce typed, non-secret errors.
-- Muse Code discovers the same four tools over `stdio`, calls read-only tools with the expected annotations, and passes the common contract suite without Muse-specific tool forks.
+- Muse Code discovers the same five read-only tools over `stdio`, calls read-only tools with the expected annotations, and passes the common contract suite without Muse-specific tool forks.
 
 ### Phase 3 — read-only hosted relay
 
@@ -517,7 +517,7 @@ Status: deferred.
 
 ### Phase 5 — controlled writes
 
-Status: local guarded send is prioritized after the local read-only gates and before Spark compatibility; relay integration follows separately, subject to a fresh threat review. The current product remains read-only.
+Status: local guarded send is prioritized after the local read-only gates and before Spark compatibility; relay integration follows separately, subject to a fresh threat review. Read-only remains the default; initial guarded plain-text send is implemented behind explicit local opt-in. Attachments and reply threading are deferred.
 
 Deliver write support in separate capability increments instead of enabling a general-purpose mailbox writer.
 

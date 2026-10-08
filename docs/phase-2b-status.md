@@ -15,7 +15,7 @@ Status: implementation in progress
 ## Verified
 
 - TypeScript strict compilation.
-- Unit/schema tests: 4 files, 13 tests.
+- Original read-only baseline: 4 files, 13 tests. The history/send bundle has 8 files and 32 tests.
 - Synthetic-provider MCP stdio contract smoke test.
 - Live Yahoo TLS, authentication, mailbox listing, read-only Inbox open, and server-side search capability probe.
 - Windows Credential Manager and native Ubuntu Linux Secret Service canary lifecycles.
@@ -30,3 +30,7 @@ Status: implementation in progress
 
 - Complete Muse Code local host testing when Muse Code is installed. Muse managed-VM setup is reported complete and its sanitized setup lessons are recorded in `muse-managed-vm.md`; that separate deployment does not establish Muse Code local-host compatibility.
 - Add native macOS credential-backend verification. Linux Secret Service has passed the native Ubuntu canary probe; Ubuntu live MCP metadata checks pass; the designated synthetic-message body check also passes.
+
+## History and guarded-send build — 2026-10-07
+
+Implemented resumable UID history search, exact arrival-date filtering, envelope-only sender statistics, and opt-in local plain-text SMTP send with prepare/confirm, durable replay state, and conservative unknown-outcome handling. Typechecking, 32 tests, build, and synthetic stdio/HTTP contract checks pass. Local SMTP sink verifies Bcc envelope/header separation and lost-acknowledgement behavior. Default startup remains read-only and adds `scan_senders`; send requires `--enable-send`. Live Yahoo SMTP, Sent-folder behavior, and native Windows/macOS send-ledger durability remain unverified. See [usage and limits](history-and-send.md).

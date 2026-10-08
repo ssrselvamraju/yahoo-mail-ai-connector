@@ -38,16 +38,17 @@ The connector does not operate a hosted service, emit analytics, build a backgro
 
 ## Capability boundary
 
-The public MCP surface contains only:
+The default public MCP surface contains:
 
 - `get_profile`
 - `list_mailboxes`
 - `search_messages`
 - `fetch_message`
+- `scan_senders`
 
-All tools are annotated read-only and non-destructive. Yahoo mailboxes are opened read-only. Message fetches use IMAP behavior that avoids setting `\\Seen`. Search is limited to a bounded recent window, returns metadata without body previews, and requires a separate bounded fetch for message text.
+These tools are annotated read-only and non-destructive. Yahoo mailboxes are opened read-only. Message fetches use IMAP behavior that avoids setting `\\Seen`. Search defaults to a bounded recent window and offers explicit resumable UID history traversal, returns metadata without body previews, and requires a separate bounded fetch for message text.
 
-There is no SMTP dependency and no tool for sending, replying, drafting, deleting, moving, archiving, or changing flags.
+The local Yahoo stdio server can explicitly enable guarded plain-text SMTP send with `--enable-send`. It then exposes prepare and commit tools with write annotations; host/user confirmation, short-lived content-bound tokens, and durable replay state are required. The synthetic HTTP endpoint stays read-only. Drafting, reply threading, deleting, moving, archiving, and flag-changing tools remain absent. See [history and send](history-and-send.md) for limits and unknown-outcome handling.
 
 ## Security assumptions
 

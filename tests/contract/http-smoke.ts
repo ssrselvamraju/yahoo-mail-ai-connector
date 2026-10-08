@@ -20,7 +20,7 @@ try {
   await client.connect(transport);
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
-  const expected = ["fetch_message", "get_profile", "list_mailboxes", "search_messages"];
+  const expected = ["fetch_message", "get_profile", "list_mailboxes", "scan_senders", "search_messages"];
   if (JSON.stringify(names) !== JSON.stringify(expected)) throw new Error(`Unexpected HTTP tool list: ${JSON.stringify(names)}`);
   for (const tool of tools) {
     if (tool.annotations?.readOnlyHint !== true || tool.annotations?.destructiveHint !== false) {
