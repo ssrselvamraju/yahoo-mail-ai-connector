@@ -69,7 +69,7 @@ The stdio contract smoke test is client-neutral. Manual host tests follow after 
 4. Muse Code
 5. Cursor
 
-Use the synthetic provider and the same four tools in every host. Record host version, negotiated MCP version, configuration, discovery result, tool result, annotations/approval behavior, stderr behavior, and any timeout.
+Use the synthetic provider and the same five read-only tools in every host. Record host version, negotiated MCP version, configuration, discovery result, tool result, annotations/approval behavior, stderr behavior, and any timeout.
 
 ## Yahoo OAuth feasibility
 

@@ -1,6 +1,6 @@
 # Yahoo Mail AI Connector
 
-Give an MCP-compatible AI assistant useful, deliberately limited access to Yahoo Mail—without handing it the ability to send, delete, move, archive, or mark messages as read.
+Give an MCP-compatible AI assistant useful, deliberately limited access to Yahoo Mail—with read-only access by default and an explicitly enabled guarded plain-text send capability.
 
 This experimental connector is built for people who want AI-assisted mail search and retrieval while keeping credential custody under their control. Run it beside a desktop client over local MCP `stdio`, or deploy it into a reviewed managed runtime such as a Muse VM using that platform's secret store.
 
@@ -8,14 +8,14 @@ This experimental connector is built for people who want AI-assisted mail search
 
 ## Why use this connector?
 
-- **Read-only by construction.** The MCP surface has four tools: identify the account, list mailboxes, search message metadata, and fetch one bounded message. There are no send, reply, delete, move, archive, draft, or flag-changing tools.
+- **Read-only by default.** Five tools identify the account, list mailboxes, search metadata, fetch one bounded message, and scan sender domains. Guarded send requires explicit local opt-in; there are no delete, move, archive, draft, or flag-changing tools.
 - **Your normal Yahoo password is never requested.** The connector uses a separately revocable Yahoo-generated app password.
 - **No plaintext credential file.** Local credentials go to Windows Credential Manager, macOS Keychain, or Linux Secret Service. If an approved credential backend is unavailable, startup fails closed.
 - **Fetch only what is requested.** Searches are bounded and return metadata without downloading message bodies. A body is retrieved only through an explicit `fetch_message` call and is size-limited.
 - **Portable MCP contract.** The provider-neutral tool layer is intended to behave consistently across MCP clients instead of binding mail access to one AI vendor.
 - **Inspectable and testable.** The implementation, security boundary, synthetic test provider, contract tests, and live-probe procedures are included in the repository under Apache-2.0.
 
-Yahoo-capable MCP servers already exist, including general-purpose IMAP connectors and other Yahoo-specific projects. This project does not claim to be the first or only one. Its differentiator is the specific combination of Yahoo-focused behavior, a strictly read-only tool surface, native OS credential storage with no plaintext fallback, bounded retrieval, and an explicit managed-runtime mode.
+Yahoo-capable MCP servers already exist, including general-purpose IMAP connectors and other Yahoo-specific projects. This project does not claim to be the first or only one. Its differentiator is the specific combination of Yahoo-focused behavior, a read-only default tool surface, native OS credential storage with no plaintext fallback, bounded retrieval, and an explicit managed-runtime mode.
 
 ## Privacy and security boundary
 
@@ -29,13 +29,13 @@ Security is layered rather than absolute:
 2. The chosen OS or managed-runtime secret store protects that credential at rest.
 3. Strict TLS protects the IMAP connection to Yahoo.
 4. Server-side code opens mailboxes read-only and fetches bodies without setting the read flag.
-5. MCP tools are annotated as read-only, return bounded data, and treat message content as untrusted input.
+5. Read tools are annotated as read-only; optional send tools have write annotations. Results are bounded and message content is untrusted input.
 
 See [the current architecture and trust boundaries](docs/architecture.md), [design record and roadmap](docs/design-and-roadmap.md), [security policy](SECURITY.md), and [spike runbook](docs/spikes/README.md).
 
 ## What is included
 
-The repository contains a provider-neutral contract, a synthetic provider, a read-only Yahoo IMAP provider, a local MCP server, OS-keyring setup commands, and opt-in validation probes. It does not provide mail write operations.
+The repository contains a provider-neutral contract, a synthetic provider, a read-only Yahoo IMAP provider, a local MCP server, OS-keyring setup commands, and opt-in validation probes. Optional guarded plain-text send is available only on the local Yahoo stdio server; mailbox mutation is unavailable.
 
 ## Quick verification
 
@@ -52,7 +52,7 @@ Gemini Spark requires a remote HTTPS MCP URL and cannot launch this local `stdio
 
 For the synthetic remote-transport smoke test, run `pnpm run build` and then `pnpm run mcp:http:fake`. It binds to loopback by default and exposes `/mcp` plus a minimal `/health` endpoint. It contains no Yahoo provider or credentials; public exposure is only for a short-lived Spark compatibility test and requires an explicit allowed tunnel hostname.
 
-Send support is planned as a separate, disabled-by-default capability with a prepare/preview step followed by a short-lived, content-bound commit token and idempotency protection. It is not present in the current release; see [Phase 5 in the roadmap](docs/design-and-roadmap.md#phase-5--controlled-writes).
+History search, sender statistics, and disabled-by-default guarded send are implemented; see [usage and safety details](docs/history-and-send.md). Send uses an exact preview, five-minute preparation token, confirmation assertion, and durable replay state. SMTP sink tests pass, and a live Yahoo send through Codex was confirmed by the account owner. Sent-folder behavior remains unverified. Spark stays deferred.
 
 ## Connect Yahoo locally
 
@@ -64,7 +64,7 @@ pnpm run connector:doctor
 pnpm run mcp:yahoo
 ```
 
-`connector:setup` verifies the login before saving it to the operating-system credential store. `connector:remove` deletes the saved record. The MCP server retrieves the credential only when opening a Yahoo connection and exposes read-only operations.
+`connector:setup` verifies the login before saving it to the operating-system credential store. `connector:remove` deletes the saved record. The MCP server retrieves the credential only when opening a Yahoo connection and exposes read-only operations unless `--enable-send` is explicitly supplied.
 
 Native credential storage is selected from the runtime OS:
 
@@ -84,7 +84,7 @@ For a Muse-managed VM or another reviewed runtime with a real managed secret sto
 - The keyring probe uses a generated canary and removes it after verification.
 - Do not pass a Yahoo app password on the command line or put it in an environment file.
 
-Current platform verification and remaining release gates are tracked in [Phase 2B status](docs/phase-2b-status.md) and [spike results](docs/spikes/results.md). Windows native credential storage has been exercised on a real host. macOS Keychain and Linux Secret Service still require native-host canary verification before this project claims runtime verification on those platforms.
+Current platform verification and remaining release gates are tracked in [Phase 2B status](docs/phase-2b-status.md) and [spike results](docs/spikes/results.md). Windows Credential Manager and Linux Secret Service have passed native-host canary verification. Ubuntu synthetic tests and both MCP transport checks also pass. macOS Keychain still requires native-host canary verification, and Ubuntu live Yahoo authentication and MCP metadata checks pass; the designated synthetic unread-message body check also passes, including verification that the message remains unread.
 
 ## License
 

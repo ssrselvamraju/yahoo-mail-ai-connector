@@ -1,3 +1,6 @@
+import { CursorCodec } from "../../local-security/src/cursor.js";
+import { bindingFor, matchesDate, searchQuery, traverse } from "./traversal.js";
+import type { SenderScanInput, SenderScanResult } from "../../mail-core/src/index.js";
 import { createHash } from "node:crypto";
 import { ImapFlow } from "imapflow";
 import type { FetchMessageObject, MessageAddressObject, MessageStructureObject, SearchObject } from "imapflow";
@@ -165,6 +168,7 @@ export async function verifyYahooCredentials(credentials: YahooCredentials): Pro
 }
 
 export class YahooImapProvider implements MailProvider {
+  readonly #cursors = new CursorCodec();
   constructor(private readonly credentials: CredentialStore) {}
 
   async #withClient<T>(operation: (client: ImapFlow, email: string) => Promise<T>): Promise<T> {
@@ -176,6 +180,10 @@ export class YahooImapProvider implements MailProvider {
     } catch (error) {
       if (error instanceof MailConnectorError) throw error;
       const code = typeof error === "object" && error !== null && "authenticationFailed" in error ? "authentication_failed" : "provider_unavailable";
+      const nativeCode = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
+      if (["ENOTFOUND", "EAI_AGAIN", "ECONNREFUSED", "ENETUNREACH"].includes(nativeCode)) throw new MailConnectorError("network_unavailable", "Yahoo network connection failed. Check DNS, connectivity, and runtime network permissions.");
+      if (["ETIMEDOUT", "ETIMEOUT"].includes(nativeCode)) throw new MailConnectorError("timeout", "Yahoo connection timed out.");
+      if (/CERT|TLS|SSL/.test(nativeCode)) throw new MailConnectorError("tls_failed", "Yahoo TLS verification failed. Check the network path and system certificate store.");
       throw new MailConnectorError(code, code === "authentication_failed" ? "Yahoo authentication failed. Run setup again with a current app password." : "Yahoo Mail is temporarily unavailable.");
     } finally {
       credentials = { email: "", appPassword: "" };
@@ -209,36 +217,42 @@ export class YahooImapProvider implements MailProvider {
   }
 
   async searchMessages(input: SearchMessagesInput): Promise<SearchMessagesResult> {
-    return this.#withClient(async (client) => {
+    return this.#withClient(async (client, email) => {
       const mailbox = input.mailboxId ? decodeMailboxId(input.mailboxId) : "INBOX";
       const lock = await client.getMailboxLock(mailbox, { readOnly: true, acquireTimeout: 10_000 });
       try {
         if (!client.mailbox) throw new MailConnectorError("provider_unavailable", "Yahoo did not open the requested mailbox.");
         const selectedMailbox = client.mailbox;
+        if (input.mode === "history" || input.uidAfter !== undefined || input.uidBefore !== undefined) {
+          const { cursor: _cursor, ...filters } = input;
+          const binding = bindingFor(email, mailbox, selectedMailbox.uidValidity.toString(), filters);
+          const page = await traverse(client, this.#cursors, binding, input, false,
+            message => input.hasAttachment === undefined || structureHasAttachment(message.bodyStructure) === input.hasAttachment);
+          return { ...page, messages: page.messages.map(message => summaryFrom(message, mailbox, selectedMailbox.uidValidity)),
+            searchScope: "bounded_local", limitations: ["History scans at most four 250-UID intervals per call; an empty page may have a continuation.", "Dates filter IMAP internal arrival time. No message bodies are fetched.", "Cursors expire after 30 minutes and server restart invalidates them."] };
+        }
         const start = Math.max(1, selectedMailbox.exists - MAX_SEARCH_WINDOW + 1);
-        const query: SearchObject = { seq: `${start}:*` };
-        if (input.query) query.text = input.query;
-        if (input.subject) query.subject = input.subject;
-        if (input.from?.length) query.from = input.from.join(" ");
-        if (input.to?.length) query.to = input.to.join(" ");
-        if (input.after) query.since = new Date(input.after);
-        if (input.before) query.before = new Date(input.before);
-        if (input.readState === "read") query.seen = true;
-        if (input.readState === "unread") query.seen = false;
+        if (!selectedMailbox.exists) return { messages: [], searchScope: "bounded_local", limitations: ["Mailbox is empty."] };
+        const query: SearchObject = { ...searchQuery(input), seq: `${start}:*` };
         const matches = await client.search(query, { uid: true });
         const uids = Array.isArray(matches) ? [...matches].sort((a, b) => b - a) : [];
-        const offset = input.cursor ? Number.parseInt(input.cursor, 10) : 0;
+        const offset = input.cursor && /^\d+$/.test(input.cursor) ? Number(input.cursor) : input.cursor ? NaN : 0;
         if (!Number.isSafeInteger(offset) || offset < 0) throw new MailConnectorError("invalid_reference", "The search cursor is invalid.");
         const scanLimit = input.hasAttachment === undefined ? input.limit : Math.min(200, Math.max(input.limit * 4, input.limit));
         const candidates = uids.slice(offset, offset + scanLimit);
         const fetched = candidates.length
           ? await client.fetchAll(candidates, { uid: true, flags: true, envelope: true, internalDate: true, bodyStructure: true }, { uid: true })
           : [];
-        const filtered = input.hasAttachment === undefined
-          ? fetched
-          : fetched.filter((message) => structureHasAttachment(message.bodyStructure) === input.hasAttachment);
-        const page = filtered.slice(0, input.limit);
-        const nextOffset = offset + candidates.length;
+        const byUid = new Map(fetched.map(message => [message.uid, message]));
+        const page: FetchMessageObject[] = [];
+        let consumed = 0;
+        for (const uid of candidates) {
+          consumed++;
+          const message = byUid.get(uid);
+          if (message && matchesDate(message, input) && (input.hasAttachment === undefined || structureHasAttachment(message.bodyStructure) === input.hasAttachment)) page.push(message);
+          if (page.length === input.limit) break;
+        }
+        const nextOffset = offset + consumed;
         const result: SearchMessagesResult = {
           messages: page.map((message) => summaryFrom(message, mailbox, selectedMailbox.uidValidity)),
           searchScope: "bounded_local",
@@ -252,6 +266,32 @@ export class YahooImapProvider implements MailProvider {
       } finally {
         lock.release();
       }
+    });
+  }
+
+  async scanSenders(input: SenderScanInput): Promise<SenderScanResult> {
+    return this.#withClient(async (client, email) => {
+      const mailbox = input.mailboxId ? decodeMailboxId(input.mailboxId) : "INBOX";
+      const lock = await client.getMailboxLock(mailbox, { readOnly: true, acquireTimeout: 10_000 });
+      try {
+        if (!client.mailbox) throw new MailConnectorError("provider_unavailable", "Mailbox unavailable.");
+        const binding = bindingFor(email, mailbox, client.mailbox.uidValidity.toString(), { tool: "scan_senders", sampleSubjects: input.sampleSubjects });
+        const page = await traverse(client, this.#cursors, binding, { mode: "history", limit: 100, cursor: input.cursor }, true);
+        const domains = new Map<string, { domain: string; count: number; sampleSubjects: string[] }>();
+        for (const message of page.messages) {
+          const unique = new Set(addresses(message.envelope?.from).map(a => a.address.split("@").at(-1)?.toLowerCase() || "(unknown)"));
+          if (!unique.size) unique.add("(unknown)");
+          for (const domain of unique) {
+            const bucket = domains.get(domain) ?? { domain, count: 0, sampleSubjects: [] };
+            bucket.count++;
+            if (bucket.sampleSubjects.length < input.sampleSubjects) bucket.sampleSubjects.push((message.envelope?.subject ?? "(no subject)").slice(0, 200));
+            domains.set(domain, bucket);
+          }
+        }
+        return { domains: [...domains.values()].sort((a,b) => b.count-a.count).slice(0,100), scannedMessages: page.messages.length,
+          complete: page.complete, ...(page.nextCursor ? { nextCursor: page.nextCursor } : {}),
+          limitations: ["At most 100 domains per page are returned; rare domains beyond that are omitted. Counts cover this page only; sum pages for the scanned scope. A message counts once per unique sender domain.", "Envelope only; no bodies fetched. An empty page may have a continuation."] };
+      } finally { lock.release(); }
     });
   }
 

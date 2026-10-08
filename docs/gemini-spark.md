@@ -1,6 +1,6 @@
 # Gemini Spark compatibility plan
 
-Status: local synthetic HTTP contract verified; public Spark connection still pending. The Yahoo connector remains local `stdio` only, while Spark requires a reachable MCP server URL.
+Status: deferred until local guarded send support passes its release gates. Local synthetic HTTP contract verified; public Spark connection still pending. The Yahoo connector remains local `stdio` only, while Spark requires a reachable MCP server URL.
 
 Google's current Spark custom-app flow accepts an MCP server URL added from the Gemini web app. A connected custom app can then be used from Spark on web and mobile. This makes Spark a Phase 3 remote-transport target, not a Phase 2 local-client target.
 
@@ -16,7 +16,7 @@ Google's current Spark custom-app flow accepts an MCP server URL added from the 
 1. Run the remote MCP contract suite locally against the synthetic provider.
 2. Deploy the same handler to a temporary HTTPS endpoint with synthetic fixtures only.
 3. Add the URL under Gemini web app **Connected Apps > Custom apps for Spark**.
-4. Confirm Spark discovers exactly `get_profile`, `list_mailboxes`, `search_messages`, and `fetch_message`, with read-only annotations and no write tools.
+4. Confirm Spark discovers exactly `get_profile`, `list_mailboxes`, `search_messages`, `fetch_message`, and `scan_senders`, with read-only annotations and no write tools.
 5. Invoke each tool using synthetic prompts and record the protocol version, request/response behavior, timeouts, and approval UI.
 6. Confirm the custom app added on web is available in Spark mobile.
 7. Exercise typed failures: invalid reference, missing message, oversized request, timeout, and endpoint unavailable.
@@ -44,3 +44,5 @@ The remaining live step is to deploy the synthetic adapter at a stable, publicly
 
 - [Connect and manage custom apps for Gemini Spark](https://support.google.com/gemini/answer/17209137)
 - [Gemini Spark updates: custom MCP connected apps](https://blog.google/innovation-and-ai/products/gemini-app/gemini-spark-updates-june-2026/)
+
+The current synthetic endpoint additionally exposes read-only `scan_senders`. The four-tool verification above records the historical October 4 run; future Spark discovery must include all five read-only tools. Optional local send is not exposed by this endpoint.

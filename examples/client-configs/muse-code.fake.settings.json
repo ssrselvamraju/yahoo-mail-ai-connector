@@ -1,12 +1,14 @@
 {
-  "mcpServers": {
+  "mcp_servers": {
     "yahoo-mail": {
+      "transport": "stdio",
       "command": "node",
       "args": [
         "REPLACE_WITH_ABSOLUTE_REPOSITORY_PATH/dist/apps/local-connector/src/stdio.js",
-        "--provider=yahoo",
-        "--enable-send"
-      ]
+        "--provider=fake"
+      ],
+      "enabled": true,
+      "mode": "optional"
     }
   }
 }

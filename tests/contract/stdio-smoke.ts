@@ -18,7 +18,7 @@ try {
   await client.connect(transport);
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
-  const expected = ["fetch_message", "get_profile", "list_mailboxes", "search_messages"];
+  const expected = ["fetch_message", "get_profile", "list_mailboxes", "scan_senders", "search_messages"];
   if (JSON.stringify(names) !== JSON.stringify(expected)) {
     throw new Error(`Unexpected tool list: ${JSON.stringify(names)}`);
   }
@@ -37,6 +37,9 @@ try {
     arguments: { query: "receipt", limit: 10 },
   });
   if (search.isError || search.structuredContent === undefined) throw new Error("search_messages failed.");
+
+  const stats = await client.callTool({ name: "scan_senders", arguments: {} });
+  if (stats.isError || stats.structuredContent === undefined) throw new Error("scan_senders failed.");
 
   const fetched = await client.callTool({
     name: "fetch_message",

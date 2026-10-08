@@ -4,6 +4,11 @@ import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 
 const serverPath = resolve("dist/apps/local-connector/src/stdio.js");
 const transport = new StdioClientTransport({
+  // The SDK default environment omits the Linux desktop Secret Service session.
+  env: Object.fromEntries(
+    ["DBUS_SESSION_BUS_ADDRESS", "XDG_RUNTIME_DIR"]
+      .flatMap((key) => process.env[key] === undefined ? [] : [[key, process.env[key]!]]),
+  ),
   command: process.execPath,
   args: [serverPath, "--provider=yahoo"],
   cwd: process.cwd(),

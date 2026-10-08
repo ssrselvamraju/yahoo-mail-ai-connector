@@ -4,6 +4,9 @@ export const getProfileInput = z.strictObject({});
 export const listMailboxesInput = z.strictObject({ includeCounts: z.boolean().default(false) });
 
 export const searchMessagesInput = z.strictObject({
+  mode: z.enum(["recent", "history"]).default("recent"),
+  uidAfter: z.number().int().min(0).max(4_294_967_295).optional(),
+  uidBefore: z.number().int().min(1).max(4_294_967_296).optional(),
   query: z.string().trim().min(1).max(500).optional(),
   from: z.array(z.string().trim().min(1).max(320)).max(20).optional(),
   to: z.array(z.string().trim().min(1).max(320)).max(20).optional(),
@@ -56,6 +59,8 @@ export const searchMessagesOutput = z.strictObject({
   nextCursor: z.string().optional(),
   searchScope: z.enum(["server", "bounded_local", "synthetic"]),
   limitations: z.array(z.string()),
+  scannedRange: z.strictObject({ uidAfter: z.number(), uidBefore: z.number() }).optional(),
+  complete: z.boolean().optional(),
 });
 export const fetchMessageOutput = summaryOutput.extend({
   bodyText: z.string(),
@@ -69,4 +74,14 @@ export const fetchMessageOutput = summaryOutput.extend({
     }),
   ),
   untrustedContent: z.literal(true),
+});
+
+export const scanSendersInput = z.strictObject({
+  mailboxId: z.string().min(1).max(512).optional(),
+  cursor: z.string().min(1).max(2048).optional(),
+  sampleSubjects: z.number().int().min(0).max(3).default(0),
+});
+export const scanSendersOutput = z.strictObject({
+  domains: z.array(z.strictObject({ domain: z.string(), count: z.number().int(), sampleSubjects: z.array(z.string()) })),
+  scannedMessages: z.number().int(), nextCursor: z.string().optional(), complete: z.boolean(), limitations: z.array(z.string()),
 });
