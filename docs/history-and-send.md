@@ -26,7 +26,7 @@ Preparation validates content, contacts no SMTP server, and returns the exact pr
 
 The MCP host must obtain independent user confirmation before calling commit. The confirmation field records the host's assertion; the server cannot prove a human clicked approval. Write/destructive annotations request host approval but do not replace the host's confirmation policy. Email text cannot supply user approval. Tokens are process-local and preparations do not survive restart.
 
-The production adapter uses smtp.mail.yahoo.com:465 with certificate validation and TLS 1.2 or newer, retrieves the existing app password from the approved credential store, disables raw logging and URL/file content access, and uses a 45-second overall submission deadline. It strips Bcc headers while keeping Bcc recipients in the SMTP envelope. Commit results expose counts and a generated Message-ID, not addresses or server responses. SMTP acceptance does not prove final delivery or Sent-folder behavior; neither Yahoo SMTP submission nor automatic Sent storage has been live-verified for this slice.
+The production adapter uses smtp.mail.yahoo.com:465 with certificate validation and TLS 1.2 or newer, retrieves the existing app password from the approved credential store, disables raw logging and URL/file content access, and uses a 45-second overall submission deadline. It strips Bcc headers while keeping Bcc recipients in the SMTP envelope. Commit results expose counts and a generated Message-ID, not addresses or server responses. SMTP acceptance does not prove final delivery or Sent-folder behavior; a live Yahoo send through Codex was confirmed by the account owner on 2026-10-07, while automatic Sent storage remains unverified.
 
 ## Replay state and unknown outcomes
 
@@ -42,4 +42,4 @@ A separate plaintext SMTP sink is used only by synthetic tests through dependenc
 
 The automated suite covers bounded sparse history, descending UID continuation, changed/expired/foreign cursors, exact date boundaries, envelope-only traversal, token expiry/content/account binding, confirmation assertions, concurrent commits, restart/replay state, private ledger contents, rate limits, SMTP Bcc handling, and ambiguous acceptance.
 
-Repeat the designated synthetic unread-body smoke after read-path changes. macOS keyring and Muse Code host verification remain separate platform gates. Spark compatibility remains deferred until guarded send release gates, including a separately approved live synthetic send and Sent-folder verification, are satisfied.
+Repeat the designated synthetic unread-body smoke after read-path changes. macOS keyring and Muse Code host verification remain separate platform gates. Spark compatibility remains deferred until guarded send release gates, including Sent-folder verification and the remaining send safety checks, are satisfied.

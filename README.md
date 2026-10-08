@@ -52,7 +52,7 @@ Gemini Spark requires a remote HTTPS MCP URL and cannot launch this local `stdio
 
 For the synthetic remote-transport smoke test, run `pnpm run build` and then `pnpm run mcp:http:fake`. It binds to loopback by default and exposes `/mcp` plus a minimal `/health` endpoint. It contains no Yahoo provider or credentials; public exposure is only for a short-lived Spark compatibility test and requires an explicit allowed tunnel hostname.
 
-History search, sender statistics, and disabled-by-default guarded send are implemented; see [usage and safety details](docs/history-and-send.md). Send uses an exact preview, five-minute preparation token, confirmation assertion, and durable replay state. SMTP sink tests pass; live Yahoo SMTP and Sent-folder behavior remain unverified. Spark stays deferred.
+History search, sender statistics, and disabled-by-default guarded send are implemented; see [usage and safety details](docs/history-and-send.md). Send uses an exact preview, five-minute preparation token, confirmation assertion, and durable replay state. SMTP sink tests pass, and a live Yahoo send through Codex was confirmed by the account owner. Sent-folder behavior remains unverified. Spark stays deferred.
 
 ## Connect Yahoo locally
 

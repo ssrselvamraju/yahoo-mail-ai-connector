@@ -30,3 +30,7 @@ Ubuntu designated synthetic-message body verification passed on 2026-10-06: `smo
 ## History and send bundle — 2026-10-07
 
 Strict typechecking, 32 tests in 8 files, compilation, and synthetic stdio/HTTP contract checks passed. Local SMTP sink tests verified Bcc envelope/header separation, authentication rejection, TLS upgrade refusal, and uncertain acceptance with no automatic resend. Read-only live Yahoo metadata, bounded UID history search, and envelope-only sender scan passed with send absent from discovery. The designated synthetic body test also passed again and confirmed unread preservation. No live SMTP send was performed, and no sensitive results were printed.
+
+### Live send confirmation — 2026-10-07
+
+After explicitly enabling guarded send in the local Yahoo MCP configuration, the account owner confirmed that sending through a fresh Codex chat worked. This is user-reported live workflow evidence; the development agent did not inspect the other chat or independently verify delivery, confirmation interaction, or Sent-folder storage. No recipient, account identifier, mail content, credential, or token is recorded here. Sent-folder behavior remains an open verification gate.
