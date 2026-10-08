@@ -18,7 +18,7 @@ For an operator example, build and run `node examples/queries/metadata.mjs` from
 
 ## Guarded local plain-text send
 
-Send is disabled by default. Explicitly add `--enable-send` when launching the **local Yahoo stdio server** to advertise `mail.send` and expose `prepare_send_message` and `commit_send_message`. Keep the usual read-only configuration for everyday read-only use. The fake provider and synthetic HTTP endpoint never expose send.
+Direct server launches leave send disabled unless `--enable-send` is supplied. The default repository client configurations include this flag for live Yahoo; matching `.fake` examples remain read-only. Supply `--enable-send` when launching the **local Yahoo stdio server** to advertise `mail.send` and expose `prepare_send_message` and `commit_send_message`. Keep the usual read-only configuration for everyday read-only use. The fake provider and synthetic HTTP endpoint never expose send.
 
 This initial send slice supports plain-text body, subject, To, Cc, and Bcc. It does not support attachments, reply threading, drafts, or mailbox mutation. ASCII addr-spec addresses only; at most 10 recipients in total, a 500-character subject without control characters, and a 50,000-byte body. Unsupported fields are rejected.
 
