@@ -18,9 +18,65 @@ function setup(adapter:SendAdapter={submit:vi.fn(async()=>({status:"accepted" as
  return {dir,ledger,service,adapter,advance:(ms:number)=>now+=ms,changeAccount:()=>{account={accountId:"other",address:"other@example.test"};}};
 }
 const commit=(p:{token:string;previewDigest:string},key="synthetic-idempotency-key")=>({token:p.token,previewDigest:p.previewDigest,idempotencyKey:key,confirmed:true});
+function windowsFixture(directory:string,body:string):Record<string,boolean|string> {
+ const script="$ErrorActionPreference='Stop'; $d=[IO.DirectoryInfo]::new([Console]::In.ReadToEnd()); $identity=[Security.Principal.WindowsIdentity]::GetCurrent(); "+body;
+ const result=spawnSync(join(process.env.SystemRoot ?? "C:\\Windows","System32","WindowsPowerShell","v1.0","powershell.exe"),["-NoProfile","-NonInteractive","-EncodedCommand",Buffer.from(script,"utf16le").toString("base64")],{input:directory,encoding:"utf8",windowsHide:true});
+ expect(result.status,"synthetic Windows fixture failed").toBe(0);
+ return JSON.parse(result.stdout);
+}
 // These are native filesystem tests: Windows ACL checks and write-through
 // publication invoke the OS helper. Keep every assertion, with a bounded budget.
 describe("guarded send", { timeout: 30_000 }, ()=>{
+ it("provisions token-owned empty state and normalizes private Node-created entries",()=>{
+  const dir=mkdtempSync(join(tmpdir(),"yahoo-send-owner-"));directories.push(dir);
+  if(process.platform==="win32"){
+   const before=windowsFixture(dir,`
+    $owner=$d.GetAccessControl().GetOwner([Security.Principal.SecurityIdentifier]);
+    $legacyReason=''; try { if ($owner.Value -ne $identity.User.Value) { throw 'Foreign owner' } } catch { $legacyReason=$_.Exception.Message }
+    @{trustedOwner=($owner.Value -eq $identity.User.Value -or $owner.Value -eq $identity.Owner.Value); elevatedOwner=($identity.Owner.Value -ne $identity.User.Value); legacyReason=$legacyReason} | ConvertTo-Json -Compress
+   `);
+   expect(before.trustedOwner).toBe(true);
+   expect(before.legacyReason).toBe(before.elevatedOwner ? "Foreign owner" : "");
+   // No account names, paths or SIDs in the runner diagnostic.
+   console.info(`Synthetic Windows ownership fixture: elevated default owner=${before.elevatedOwner}; legacy helper reason=${before.legacyReason || "none"}`);
+  }
+  new AttemptLedger(dir);
+  writeFileSync(join(dir,"synthetic.tmp"),"synthetic fixture",{mode:0o600});
+  mkdirSync(join(dir,"synthetic-lock"),{mode:0o700});
+  if(process.platform==="win32"){
+   const before=windowsFixture(dir,`
+    $trusted=$true; foreach ($item in $d.GetFileSystemInfos()) { $owner=$item.GetAccessControl().GetOwner([Security.Principal.SecurityIdentifier]).Value; if ($owner -ne $identity.User.Value -and $owner -ne $identity.Owner.Value) { $trusted=$false } }
+    @{trustedOwners=$trusted} | ConvertTo-Json -Compress
+   `);
+   expect(before.trustedOwners).toBe(true);
+   windows.windowsStorage("validate",dir);
+   const after=windowsFixture(dir,`
+    $private=$true; foreach ($item in @($d)+@($d.GetFileSystemInfos())) {
+     $acl=$item.GetAccessControl(); if ($acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $identity.User.Value) { $private=$false }
+     foreach ($rule in $acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier])) { if ($rule.AccessControlType -eq 'Allow' -and $rule.IdentityReference.Value -ne $identity.User.Value) { $private=$false } }
+    }
+    @{private=$private; protected=$d.GetAccessControl().AreAccessRulesProtected} | ConvertTo-Json -Compress
+   `);
+   expect(after).toEqual({private:true,protected:true});
+  }else new AttemptLedger(dir);
+ });
+ it("rejects administrator access on populated Windows state even for an elevated token",()=>{
+  const s=setup();writeFileSync(join(s.dir,"existing.json"),"synthetic");
+  if(process.platform==="win32"){
+   windowsFixture(s.dir,`
+    $acl=$d.GetAccessControl();
+    $acl.SetOwner($identity.Owner);
+    $acl.AddAccessRule([Security.AccessControl.FileSystemAccessRule]::new([Security.Principal.SecurityIdentifier]::new('S-1-5-32-544'),'Read','Allow'));
+    $d.SetAccessControl($acl); @{configured=$true} | ConvertTo-Json -Compress
+   `);
+   expect(()=>new AttemptLedger(s.dir)).toThrow("Non-private access");
+   expect(()=>windows.windowsStorage("validate",s.dir)).toThrow("Non-private access");
+  }else{
+   chmodSync(s.dir,0o755);
+   expect(()=>new AttemptLedger(s.dir)).toThrow(/private|privacy/);
+  }
+  expect(readFileSync(join(s.dir,"existing.json"),"utf8")).toBe("synthetic");
+ });
  it("prepares without submission, replays one result and persists no content, addresses or token",async()=>{
   const s=setup();const p=await s.service.prepare(content);expect(s.adapter.submit).not.toHaveBeenCalled();
   expect(await s.service.commit(commit(p))).toEqual({status:"accepted"});
