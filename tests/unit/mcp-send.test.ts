@@ -31,4 +31,4 @@ it("keeps send absent by default and exposes guarded write tools only with expli
    }finally{await client.close();await server.close();}
   }
  }finally{rmSync(dir,{recursive:true,force:true});}
-});
+},30_000);

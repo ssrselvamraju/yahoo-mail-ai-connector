@@ -1,7 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
-import { mkdirSync, openSync, writeFileSync, fsyncSync, closeSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, openSync, writeFileSync, fsyncSync, closeSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, lstatSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { z } from "zod";
+import { windowsStorage } from "./windows-storage.js";
 
 const address = z.string().max(254).regex(/^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,63}$/);
 export const sendInput = z.strictObject({
@@ -33,18 +34,34 @@ function readAttempt(path: string): Attempt {
 // Contains hashes, timestamps, generated message IDs and outcomes only. Never content or addresses.
 export class AttemptLedger {
   constructor(readonly directory: string) {
-    mkdirSync(directory, { recursive: true, mode: 0o700 });
-    if ((statSync(directory).mode & 0o077) !== 0) throw Error("Send state directory must be private (mode 0700).");
+    this.directory = resolve(directory);
+    if (process.platform === "win32") windowsStorage("initialize", this.directory);
+    else {
+      mkdirSync(this.directory, { recursive: true, mode: 0o700 });
+      this.#validate();
+    }
+  }
+  #validate(): void {
+    if (process.platform === "win32") windowsStorage("validate", this.directory);
+    else if (lstatSync(this.directory).isSymbolicLink() || (statSync(this.directory).mode & 0o077) !== 0) {
+      throw Error("Send state directory must be private (mode 0700).");
+    }
   }
   #write(path: string, data: Attempt, exclusive: boolean): void {
-    const target = exclusive ? path : `${path}.${randomBytes(8).toString("hex")}.tmp`;
+    const windows = process.platform === "win32";
+    const target = exclusive && !windows ? path : `${path}.${randomBytes(8).toString("hex")}.tmp`;
     const fd = openSync(target, "wx", 0o600);
     try { writeFileSync(fd, JSON.stringify(data)); fsyncSync(fd); } finally { closeSync(fd); }
+    if (windows) {
+      windowsStorage("publish", this.directory, { source: target, destination: path, exclusive });
+      return;
+    }
     if (!exclusive) renameSync(target, path);
     const dir = openSync(this.directory, "r");
     try { fsyncSync(dir); } finally { closeSync(dir); }
   }
   claim(accountId: string, key: string, token: string, messageId: string, now: number): { prior?: Attempt; path: string } {
+    this.#validate();
     const path = join(this.directory, `${hash(accountId + ":" + key)}.json`);
     const lock = join(this.directory, ".lock");
     try { mkdirSync(lock, { mode: 0o700 }); } catch { throw Error("Send state is busy or requires inspection after an interrupted operation."); }
@@ -67,6 +84,7 @@ export class AttemptLedger {
     } finally { rmdirSync(lock); }
   }
   finish(path: string, result: SendResult): void {
+    this.#validate();
     const attempt = readAttempt(path);
     this.#write(path, { ...attempt, status: result.status, result }, false);
   }
